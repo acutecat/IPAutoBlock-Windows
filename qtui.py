@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QCheckBox
                              QWidget)
 
 import core
+import version
 
 WHITE = "#ffffff"
 PAGE = "#f2f4f7"
@@ -755,7 +756,7 @@ class AboutDialog(QDialog):
 
     def __init__(self, parent, year: int):
         super().__init__(parent)
-        self.setWindowTitle("关于本程序")
+        self.setWindowTitle("关于本程序 · v%s" % version.APP_VERSION)
         self.setObjectName("about")
         self.setModal(True)
         self.setFixedWidth(470)
@@ -778,6 +779,12 @@ class AboutDialog(QDialog):
         self.title_label.setFont(app_font(14, True))
         self.title_label.setStyleSheet("color:%s;" % TEXT)
         root.addWidget(self.title_label)
+        root.addSpacing(6)
+
+        self.version_label = QLabel("版本 v%s" % version.APP_VERSION)
+        self.version_label.setAlignment(Qt.AlignCenter)
+        self.version_label.setStyleSheet("color:%s;" % MUTED)
+        root.addWidget(self.version_label)
         root.addSpacing(8)
 
         span = "2025-%d" % year if year > 2025 else "2025"

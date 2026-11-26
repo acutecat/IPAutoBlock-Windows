@@ -29,6 +29,11 @@ from PyQt5.QtWidgets import QApplication  # noqa: E402
 import core  # noqa: E402
 import main  # noqa: E402
 import qtui  # noqa: E402
+import version  # noqa: E402
+
+# CI 上不申请管理员、不碰真实防火墙；渲染走 offscreen。
+if os.environ.get("IPAB_CI") == "1":
+    core.is_admin = lambda: False
 
 qapp = QApplication([])
 qapp.setStyle("Fusion")
@@ -51,6 +56,8 @@ def check(name, condition, detail=""):
 
 
 check("默认封锁时长为 1 天", window.edit_expiry_value.text() == "1", window.edit_expiry_value.text())
+check("主窗口标题带版本号", window.windowTitle() == "%s v%s" % (version.APP_NAME, version.APP_VERSION),
+      window.windowTitle())
 
 
 # --- 名单增删 ---
@@ -281,6 +288,7 @@ if window.tray is not None:
     about = qtui.AboutDialog(window, datetime.now().year)
     texts = " ".join(l.text() for l in about.findChildren(qtui.QLabel))
     check("关于窗口包含软件名", "IP 自动封锁工具" in texts, texts)
+    check("关于窗口包含版本号", "版本 v%s" % version.APP_VERSION in texts, texts)
     check("关于窗口版权年份", "Copyright © 2025-%d GK.2" % datetime.now().year in texts, texts)
     check("关于窗口包含使用限制", "禁止逆向" in texts and "禁止用于商业项目" in texts, texts)
     check("关于窗口包含权利声明", "All rights reserved" in texts, texts)

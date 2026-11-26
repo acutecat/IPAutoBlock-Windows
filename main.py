@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QCheckBox
 
 import core
 import qtui
+import version
 from qtui import (BLUE, CheckBox, PAGE, WHITE, Section, app_font, make_shield_pixmap)
 
 
@@ -31,7 +32,7 @@ class Bridge(QObject):
 class App(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("IP 自动封锁")
+        self.setWindowTitle("%s v%s" % (version.APP_NAME, version.APP_VERSION))
         self.resize(1040, 900)
         self.setMinimumSize(940, 680)
         screen = QApplication.primaryScreen().availableGeometry()
@@ -506,7 +507,7 @@ class App(QMainWindow):
             return
         icon = qtui.app_icon()
         tray = QSystemTrayIcon(icon, self)
-        tray.setToolTip("IP 自动封锁")
+        tray.setToolTip("%s v%s" % (version.APP_NAME, version.APP_VERSION))
         menu = QMenu()
         act_open = QAction("打开主界面", self)
         act_open.triggered.connect(self.show_main)
@@ -687,7 +688,7 @@ class App(QMainWindow):
             color = "#9aa3ae"
         self.dot.setStyleSheet("background-color:%s;border-radius:5px;" % color)
         if self.tray is not None:
-            tip = "IP 自动封锁 · 已封锁 %d 个地址" % len(cfg["block"])
+            tip = "%s v%s · 已封锁 %d 个地址" % (version.APP_NAME, version.APP_VERSION, len(cfg["block"]))
             if not core.is_admin():
                 tip += " · 权限不足"
             self.tray.setToolTip(tip)

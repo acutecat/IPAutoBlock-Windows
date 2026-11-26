@@ -1,5 +1,11 @@
 # IP 自动封锁（Windows 版）
 
+![version](https://img.shields.io/badge/version-v1.0.0-1f6fd0)
+![CI](https://github.com/acutecat/IPAutoBlock-Windows/actions/workflows/ci.yml/badge.svg?branch=dev)
+![release](https://img.shields.io/github/v/release/acutecat/IPAutoBlock-Windows?label=release)
+
+当前版本 **v1.0.0**。`main` 是稳定分支，`dev` 是开发分支；稳定版 exe 见 [Releases](https://github.com/acutecat/IPAutoBlock-Windows/releases/latest)，分支与发版规则见 [BRANCHING.md](BRANCHING.md)。
+
 复刻群晖 DSM「自动封锁 / 拒绝服务（DoS）保护」模块的 Windows 工具。监视 Windows 安全日志中的登录失败事件，在设定时间内失败次数超阈值的来源 IP 会被自动写入 Windows 防火墙阻止规则，并按设定时长自动解封。
 
 界面按群晖 DSM 的设置面板与「允许 / 封锁名单」弹窗复刻：折叠分组、蓝色标题、勾选式开关、下划线页签、搜索与导出。
@@ -111,19 +117,23 @@ Remove-Item "$env:APPDATA\IPAutoBlock" -Recurse -Force
 
 ```
 IPAutoBlock/
+├─ version.py        版本号唯一来源（APP_VERSION）
 ├─ launcher.py       打包入口：捕获 Qt 加载失败并给出中文提示 / 写 startup.log
 ├─ main.py           主界面、设置与名单逻辑
 ├─ qtui.py           DSM 风格控件、允许 / 封锁名单窗口、关于窗口
 ├─ core.py           配置存储、防火墙、安全日志监视、DoS 检测
 ├─ app_icon.png      应用图标母版（512×512，exe/窗口/托盘/关于统一使用）
 ├─ build\app_icon.ico 由母版导出的多尺寸图标（16/24/32/48/64/128/256）
-├─ build.ps1         一键打包脚本
+├─ build.ps1         一键打包脚本（自动写 exe 版本信息）
+├─ .github\workflows\ci.yml      开发/PR 自动测试
+├─ .github\workflows\release.yml 稳定分支自动构建 + 发 Release
+├─ BRANCHING.md      开发分支 / 稳定分支 / 发版规则
 └─ tools/            开发辅助（界面截图、功能自测、图标生成）
 ```
 
 ## 自行打包
 
-需要 Python 3.10+（含 PyQt5 与 PyInstaller）：
+需要 Python 3.10+（含 PyQt5 与 PyInstaller）。发版前先改 `version.py` 的 `APP_VERSION`，`build.ps1` 会把它写进 exe 文件属性，同时显示在主窗口、托盘和关于窗口。
 
 ```powershell
 python -m venv C:\Users\<你>\ipab-qt5
@@ -137,6 +147,7 @@ python tools\make_ico_from_png.py   # 从 app_icon.png 生成 build\app_icon.ico
 ```powershell
 python -m PyInstaller --noconfirm --clean --onefile --windowed --uac-admin ^
   --name IPAutoBlock --icon "<项目>\build\app_icon.ico" ^
+  --version-file "<项目>\build\version_info.txt" ^
   --add-data "<项目>\app_icon.png;." --add-data "<项目>\build\app_icon.ico;." ^
   launcher.py
 ```
