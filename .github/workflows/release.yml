@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Gate
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build and publish
+    needs: test
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Build exe
+        shell: pwsh
+        run: |
+          $version = (python -c "import version; print(version.APP_VERSION)").Trim()
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "version.py 中的 APP_VERSION 必须是 x.y.z，当前：$version"
+          }
+          "IPAB_VERSION=$version" >> $env:GITHUB_ENV
+          .\build.ps1
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IPAutoBlock-${{ env.IPAB_VERSION }}
+          path: dist/IPAutoBlock.exe
+          retention-days: 14
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = $env:IPAB_VERSION
+          $tag = "v$version"
+          $exe = Join-Path $PWD "dist\IPAutoBlock.exe"
+          $asset = Join-Path $PWD "dist\IPAutoBlock-$tag.exe"
+          Copy-Item -LiteralPath $exe -Destination $asset -Force
+          $hash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLower()
+          $notes = "IP 自动封锁 v$version`n`n- 单文件 Windows x64 exe（UAC 提权）`n- SHA256: $hash`n- 源码: https://github.com/acutecat/IPAutoBlock-Windows/tree/main"
+          gh release view $tag --json tagName *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag $asset --title "IP 自动封锁 $tag" --notes $notes --latest
+          } else {
+            gh release upload $tag $asset --clobber
+            gh release edit $tag --title "IP 自动封锁 $tag" --notes $notes --latest
+          }
