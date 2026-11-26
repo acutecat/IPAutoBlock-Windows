@@ -38,5 +38,4 @@ jobs:
           python -c "import PyQt5.QtCore as c; print('Qt', c.QT_VERSION_STR)"
 
       - name: Run functional tests
-        run: >
-          python -c "import os, tempfile, runpy; os.environ['APPDATA']=tempfile.mkdtemp(prefix='ipab_ci_'); os.environ['IPAB_NO_BACKUP']='1'; import core; core.is_admin=lambda: False; core.query_failures=lambda *a, **k: (5, [], '拒绝访问。'); runpy.run_path('tools/functional_test.py', run_name='__main__')"
+        run: python tools/ci_runner.py
